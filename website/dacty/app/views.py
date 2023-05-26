@@ -34,12 +34,20 @@ def login(request):
         username = request.POST['username']
         password = request.POST['password']
 
-        user = auth.authenticate(username=username, password=password)
+        if (len(username) == 0 or len(password) == 0):
+            messages.info(request, 'Invalid User / Password')
+            return redirect('login')
 
-        if user is not None:
-            auth.login(request, user)
-            return redirect('home')
-        else:
+        try:
+            user = auth.authenticate(username=username, password=password)
+
+            if user is not None:
+                auth.login(request, user)
+                return redirect('home')
+            else:
+                messages.info(request, 'Invalid User / Password')
+                return redirect('login')
+        except:
             messages.info(request, 'Invalid User / Password')
             return redirect('login')
     return render(request, "login.html")
