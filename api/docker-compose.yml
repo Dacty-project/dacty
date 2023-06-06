@@ -1,0 +1,38 @@
+version: '3'
+
+networks:
+  db-net:
+    driver: bridge
+
+services:
+  dacty-db:
+    container_name: dacty-db
+    image: mongo:7.0.0-rc2
+    ports:
+      - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_DATABASE=dacty
+      - MONGO_INITDB_ROOT_PASSWORD=admin
+    networks:
+      - db-net
+    restart: always
+    
+
+  db-explorer:
+    container_name: dacty-db-explorer
+    image: mongo-express:latest
+    depends_on:
+      - dacty-db
+    networks:
+      - db-net
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=dacty-db
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=admin
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+    ports:
+      - 8081:8081
+    restart: always
