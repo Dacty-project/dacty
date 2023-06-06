@@ -55,3 +55,11 @@ def login(request):
 def logout(request):
     auth.logout(request)
     return redirect('/')
+
+def training(request):
+    if request.method == 'POST':
+        pass
+    if request.user.is_authenticated:
+        return render(request, "training.html")
+    else:
+        return redirect('login')
