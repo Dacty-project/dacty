@@ -74,7 +74,7 @@
             <div id="test-container">
                 <div id="reference-text">Reference Text: <br>
                 <p id="text-ref"></p>
-                <textarea id="input-field" rows="5" cols="40" placeholder="Start typing here" oninput="startTest()"></textarea>
+                <textarea id="input-field" rows="5" cols="40" placeholder="Start typing here" oninput="createTrainingSession('{{request.user.username}}')"></textarea>
                 </div>
                 <button onclick="endTest()">End Test</button>
             </div>

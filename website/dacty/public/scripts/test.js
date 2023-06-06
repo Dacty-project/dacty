@@ -63,10 +63,35 @@ function endTest() {
     result.innerHTML = `Accuracy: ${accuracy}%<br>Typing speed: ${speed} words per minute`;
 }
 
+function createTrainingSession(username) {
+    if (alreadyLaunched)
+        return;
+    const sessionData = {
+        "user": username
+    };
+    console.log(sessionData);
+
+    fetch("http://localhost:8080/training/create", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sessionData),
+    })
+        .then((response) => response.json())
+        .then((data) => {
+            console.log(data.message);
+            console.log("Session ID:", data.id);
+            startTest();
+        })
+        .catch((error) => {
+            console.error("Error:", error);
+        });
+}
+
 function main() {
     let ref = document.getElementById("text-ref");
     ref.innerHTML = `"${referenceText}"`;
-    console.log("here !");
 }
 
 main();

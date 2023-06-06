@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -55,7 +56,10 @@ func main() {
 	http.HandleFunc("/version", getVersion)
 	http.HandleFunc("/training/create", createTrainingSession)
 
-	log.Fatal(http.ListenAndServe(":"+port, nil))
+	// Create a new CORS handler
+	corsHandler := cors.Default().Handler(http.DefaultServeMux)
+
+	log.Fatal(http.ListenAndServe(":"+port, corsHandler))
 }
 
 // Get server status (Ok)
