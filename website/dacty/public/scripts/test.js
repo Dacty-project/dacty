@@ -1,7 +1,8 @@
 let startTime;
-let referenceText = "Hello It's the reference text for this app.";
+let referenceText = "Wikipédia est un projet d’encyclopédie collective en ligne, universelle, multilingue et fonctionnant sur le principe du wiki. Ce projet vise à offrir un contenu librement réutilisable, objectif et vérifiable, que chacun peut modifier et améliorer.";
 let alreadyLaunched = false;
 let stopTimer = false;
+let wordsCounter = 0;
 
 // Function to format the time
 function formatTime(time) {
@@ -37,11 +38,13 @@ function startTimer() {
 }
 
 function startTest() {
+    wordsCounter = 0;
     startTimer();
 }
 
-function endTest() {
-    stopTimer = true;
+function endTest(update) {
+    if (update === false)
+        stopTimer = true;
     let endTime = new Date().getTime();
     let elapsedTime = (endTime - startTime) / 1000;
     let typedText = document.getElementById("input-field").value.trim();
@@ -50,6 +53,9 @@ function endTest() {
     let referenceWords = referenceText.split(" ");
     let correctWords = 0;
     
+    if (typedText.length >= referenceText.length)
+        stopTimer = true;
+
     for (let i = 0; i < typedWords.length; i++) {
         if (typedWords[i] === referenceWords[i]) {
             correctWords++;
@@ -64,8 +70,9 @@ function endTest() {
 }
 
 function createTrainingSession(username) {
-    if (alreadyLaunched)
+    if (alreadyLaunched) {
         return;
+    }
     const sessionData = {
         "user": username
     };
@@ -87,6 +94,46 @@ function createTrainingSession(username) {
         .catch((error) => {
             console.error("Error:", error);
         });
+}
+
+function updateProgressBar() {
+    let typedText = document.getElementById("input-field").value.trim();
+    var bar = document.getElementById("progress-bar");
+    
+    
+    let pourcent = typedText.length / referenceText.length * 100;
+    
+    console.log(Math.round(pourcent).toString() + "%");
+    bar.style.width = Math.round(pourcent).toString() + "%";
+
+    if (Math.round(pourcent).toString() === "100")
+        bar.classList.add("bg-success");
+    else
+        bar.classList.remove("bg-success");
+}
+
+function updateRefText() {
+    // Get the text content of the reference element
+    let result = document.getElementById("input-field").value;
+
+    console.log("result : [" + result + "]");
+
+    // Check if the text ends with a space
+    let endsWithSpace = result.endsWith(" ");
+
+    // Log the result
+    console.log("Text ends with space:", endsWithSpace);
+    if (endsWithSpace) {
+        document.getElementById("input-field").value = "";
+        wordsCounter++;
+    }
+}
+
+function textUpdate() {
+    updateProgressBar();
+    //updateRefText();
+    endTest(true);
+    console.log("Updated !");
 }
 
 function main() {

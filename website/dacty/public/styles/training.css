@@ -1,0 +1,8 @@
+.input-field {
+    border: 1px solid #999999;
+    width: 80vh;
+    height: 20vh;
+    margin: 5px 0;
+    padding: 3px;
+    text-align: center;
+}
