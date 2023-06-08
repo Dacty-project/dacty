@@ -3,6 +3,7 @@ let referenceText = "Wikipédia est un projet d’encyclopédie collective en li
 let alreadyLaunched = false;
 let stopTimer = false;
 let wordsCounter = 0;
+let savedInputText = "";
 
 // Function to format the time
 function formatTime(time) {
@@ -39,6 +40,7 @@ function startTimer() {
 
 function startTest() {
     wordsCounter = 0;
+    savedInputText = "";
     startTimer();
 }
 
@@ -47,7 +49,7 @@ function endTest(update) {
         stopTimer = true;
     let endTime = new Date().getTime();
     let elapsedTime = (endTime - startTime) / 1000;
-    let typedText = document.getElementById("input-field").value.trim();
+    let typedText = savedInputText;
     
     let typedWords = typedText.split(" ");
     let referenceWords = referenceText.split(" ");
@@ -97,11 +99,11 @@ function createTrainingSession(username) {
 }
 
 function updateProgressBar() {
-    let typedText = document.getElementById("input-field").value.trim();
+    let ref = referenceText.split(" ");
     var bar = document.getElementById("progress-bar");
     
     
-    let pourcent = typedText.length / referenceText.length * 100;
+    let pourcent = wordsCounter / ref.length * 100;
     
     console.log(Math.round(pourcent).toString() + "%");
     bar.style.width = Math.round(pourcent).toString() + "%";
@@ -113,27 +115,41 @@ function updateProgressBar() {
 }
 
 function updateRefText() {
-    // Get the text content of the reference element
-    let result = document.getElementById("input-field").value;
+    let ref = document.getElementById("text-ref");
+    let referenceText = ref.textContent.trim();
+    let splittedText = referenceText.split(" ");
 
-    console.log("result : [" + result + "]");
-
-    // Check if the text ends with a space
-    let endsWithSpace = result.endsWith(" ");
-
-    // Log the result
-    console.log("Text ends with space:", endsWithSpace);
-    if (endsWithSpace) {
+    if (document.getElementById("input-field").value.endsWith(" ")) {
+        savedInputText += document.getElementById("input-field").value;
         document.getElementById("input-field").value = "";
         wordsCounter++;
+    }
+    console.log(savedInputText);
+    if (wordsCounter >= 0 && wordsCounter < splittedText.length) {
+        let wordToBold = splittedText[wordsCounter];
+        let boldedText = splittedText
+        .map((word, index) => {
+            if (index === wordsCounter) {
+            return "<strong>" + word + "</strong>";
+            }
+            return word;
+        })
+        .join(" ");
+
+        ref.innerHTML = boldedText;
     }
 }
 
 function textUpdate() {
     updateProgressBar();
-    //updateRefText();
+    updateRefText();
     endTest(true);
     console.log("Updated !");
+}
+
+function restartTest() {
+    ref.innerHTML = `"${referenceText}"`;
+    startTest();
 }
 
 function main() {
