@@ -12,6 +12,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -55,6 +56,8 @@ func main() {
 	http.HandleFunc("/status", getStatus)
 	http.HandleFunc("/version", getVersion)
 	http.HandleFunc("/training/create", createTrainingSession)
+	http.HandleFunc("/training/reset", resetTrainingSession)
+	http.HandleFunc("/training/finish", endTrainingSession)
 
 	// Create a new CORS handler
 	corsHandler := cors.Default().Handler(http.DefaultServeMux)
@@ -81,10 +84,10 @@ type Session struct {
 
 	UserName string `json:"user"`
 
-	Status        bool      `json:"status"`
-	TrainingTimer time.Time `json:"timer"`
-	WPM           int       `json:"wpm"`
-	Accuracy      int       `json:"accuracy"`
+	Status        bool   `json:"status"`
+	TrainingTimer string `json:"timer"`
+	WPM           int    `json:"wpm"`
+	Accuracy      int    `json:"accuracy"`
 
 	Timestamp time.Time `bson:"timestamp" json:"timestamp"`
 }
@@ -110,7 +113,7 @@ func createTrainingSession(w http.ResponseWriter, r *http.Request) {
 	session.Status = false
 	session.WPM = 0
 	session.Accuracy = 0
-	session.TrainingTimer = time.Now()
+	session.TrainingTimer = "00:00:00"
 
 	// Insert the session into MongoDB
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -129,6 +132,110 @@ func createTrainingSession(w http.ResponseWriter, r *http.Request) {
 	response := map[string]string{
 		"message": "Session created and saved successfully",
 		"id":      sessionID.Hex(),
+	}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Failed to create response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+func resetTrainingSession(w http.ResponseWriter, r *http.Request) {
+	// Read the request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Unmarshal the JSON data into a Session struct
+	var session Session
+	err = json.Unmarshal(body, &session)
+	if err != nil {
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve the session ID from the request body
+	sessionID := session.ID
+
+	// Reset the training session in the database
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"status", false},
+			{"trainingtimer", "00:00:00"},
+			{"timestamp", time.Now()},
+			{"wpm", 0},
+			{"accuracy", 0},
+		}},
+	}
+
+	_, err = collection.UpdateOne(ctx, bson.M{"_id": sessionID}, update)
+	if err != nil {
+		http.Error(w, "Failed to reset session", http.StatusInternalServerError)
+		return
+	}
+
+	response := map[string]string{
+		"message": "Session reset successfully",
+	}
+	jsonResponse, err := json.Marshal(response)
+	if err != nil {
+		http.Error(w, "Failed to create response", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(jsonResponse)
+}
+
+func endTrainingSession(w http.ResponseWriter, r *http.Request) {
+	// Read the request body
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		return
+	}
+
+	// Unmarshal the JSON data into a Session struct
+	var session Session
+	err = json.Unmarshal(body, &session)
+	if err != nil {
+		http.Error(w, "Failed to parse request body", http.StatusBadRequest)
+		return
+	}
+
+	// Retrieve the session ID from the request body
+	sessionID := session.ID
+
+	// Update the training session in the database to mark it as completed
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	update := bson.D{
+		{"$set", bson.D{
+			{"status", true},
+			{"trainingtimer", session.TrainingTimer},
+			{"wpm", session.WPM},
+			{"accuracy", session.Accuracy},
+		}},
+	}
+
+	_, err = collection.UpdateOne(ctx, bson.M{"_id": sessionID}, update)
+	if err != nil {
+		http.Error(w, "Failed to end session", http.StatusInternalServerError)
+		return
+	}
+
+	// Send a response indicating the session was completed
+	response := map[string]string{
+		"message": "Session completed successfully",
 	}
 	jsonResponse, err := json.Marshal(response)
 	if err != nil {

@@ -4,6 +4,7 @@ let alreadyLaunched = false;
 let stopTimer = false;
 let wordsCounter = 0;
 let savedInputText = "";
+let sessionId = "";
 
 // Function to format the time
 function formatTime(time) {
@@ -41,7 +42,13 @@ function startTimer() {
 function startTest() {
     wordsCounter = 0;
     savedInputText = "";
+    alreadyLaunched = false;
     startTimer();
+    updateProgressBar();
+    updateRefText()
+    let result = document.getElementById("result");
+
+    result.innerHTML = "<p></p>";
 }
 
 function endTest(update) {
@@ -91,10 +98,11 @@ function createTrainingSession(username) {
         .then((data) => {
             console.log(data.message);
             console.log("Session ID:", data.id);
+            sessionId = data.id;
             startTest();
         })
         .catch((error) => {
-            console.error("Error:", error);
+            console.error("Error: ", error);
         });
 }
 
@@ -147,8 +155,33 @@ function textUpdate() {
     console.log("Updated !");
 }
 
+function resetSession() {
+    if (!alreadyLaunched)
+        return;
+    const sessionData = {
+        "session": sessionId
+    };
+
+    fetch("http://localhost:8080/training/reset", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify(sessionData),
+    })
+        .then((reponse) => reponse.json())
+        .then((data) => {
+            console.log(data);
+        })
+        .catch((error) => {
+            console.log("Error: ", error);
+        });
+}
+
 function restartTest() {
-    ref.innerHTML = `"${referenceText}"`;
+    console.log("Restart test...");
+    resetSession();
+    //ref.innerHTML = `"${referenceText}"`;
     startTest();
 }
 
